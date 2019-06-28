@@ -1,6 +1,8 @@
 from socket import socket
 from argparse import ArgumentParser
 
+import timestamp as timestamp
+import json
 
 parser = ArgumentParser()
 
@@ -26,13 +28,20 @@ if args.port:
     default_config['port'] = args.port
 
 host, port = (default_config.get('host'), default_config.get('port'))
+client_data = {
+    "action": "presence",
+    "time": timestamp(),
+    "type": "status",
+    "user": {
+        "account_name":  "C0deMaver1ck",
+        "status":      "Yep, I am here!"
+    }
+}
 
 sock = socket()
-sock.connect((default_config.get('host'), default_config.get('port')))
+sock.connect((host, port))
 
-message = input('Enter message: ')
-
-sock.send(message.encode())
-print(f'Client send message: {message}')
+sock.send(json.dumps(client_data).encode())
+print(f'Client send message: {client_data}')
 s_response = sock.recv(default_config.get('buffersize'))
 print(f'Message from server: {s_response.decode()}')

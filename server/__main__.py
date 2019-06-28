@@ -1,5 +1,6 @@
 from socket import socket
 from argparse import ArgumentParser
+import json
 
 
 parser = ArgumentParser()
@@ -15,7 +16,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 default_config = {
-    'host': 'localhost',
+    'host': '',
     'port': 7777,
     'buffersize': 1024
 }
@@ -39,9 +40,12 @@ try:
         client, address = sock.accept()
         print(f'Client was connected with {address[0]}:{address[1]}')
         c_request = client.recv(default_config.get('buffersize'))
-        print(f'Message from client: {c_request.decode()}')
-        s_message = f'Your message: {c_request.decode()}'
-        client.send(s_message.encode())
+        print(f'Message from client: {json.loads(c_request.decode())}')
+        data_server = {
+            "response": 200,
+            "alert": "You are connected"
+        }
+        client.send(json.dumps(data_server).encode())
         client.close()
 
 
