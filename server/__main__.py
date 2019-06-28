@@ -1,4 +1,3 @@
-import yaml
 from socket import socket
 from argparse import ArgumentParser
 
@@ -6,26 +5,30 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 
 parser.add_argument(
-    '-c', '--config', type=str,
-    required=False, help='Sets config file path'
+    '-a', '--address', type=str,
+    required=False, help='Set address'
 )
-
+parser.add_argument(
+    '-p', '--port', type=int,
+    required=False, help='Set port'
+)
 args = parser.parse_args()
 
 default_config = {
     'host': 'localhost',
-    'port': '7777',
-    'buffersize': '1024'
+    'port': 7777,
+    'buffersize': 1024
 }
 
-if args.config:
-    with open(args.config) as file:
-        file_config = yaml.load(file, Loader=yaml.Loader)
-        default_config.update(file_config)
+if args.address:
+    default_config['host'] = args.address
+if args.port:
+    default_config['port'] = args.port
 
-host, port = (default_config['host'], default_config['port'])
+host, port = (default_config.get('host'), default_config.get('port'))
 
 try:
+
     sock = socket()
     sock.bind((host, port,))
     sock.listen(5)
@@ -35,7 +38,12 @@ try:
     while True:
         client, address = sock.accept()
         print(f'Client was connected with {address[0]}:{address[1]}')
-        
+        c_request = client.recv(default_config.get('buffersize'))
+        print(f'Message from client: {c_request.decode()}')
+        s_message = f'Your message: {c_request.decode()}'
+        client.send(s_message.encode())
+        client.close()
 
-except InterruptedError:
+
+except KeyboardInterrupt:
     print(' Server shutdown')
