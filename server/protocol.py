@@ -1,3 +1,5 @@
+
+
 def validate_request(request):
     if 'action' in request and 'time' in request:
         return True

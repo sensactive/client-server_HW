@@ -51,7 +51,7 @@ try:
 
     while True:
         client, address = sock.accept()
-        logger.info(f'Clietn was connected with {address[0]}:{address[1]}')
+        logger.info(f'Client was connected with {address[0]}:{address[1]}')
         b_request = client.recv(default_config.get('buffersize'))
         request = json.loads(b_request.decode())
 

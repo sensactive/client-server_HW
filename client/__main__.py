@@ -1,3 +1,4 @@
+import hashlib
 from socket import socket
 from argparse import ArgumentParser
 
@@ -34,13 +35,19 @@ sock.connect((host, port))
 
 print('Client was started')
 
+hash_obj = hashlib.sha256()
+hash_obj.update(
+    str(datetime.now().timestamp()).encode()
+)
+
 action = input('Enter action: ')
 data = input('Enter data: ')
 
 request = {
-    "action": action,
-    "time": datetime.now().timestamp(),
-    "data": data
+    'action': action,
+    'time': datetime.now().timestamp(),
+    'data': data,
+    'token': hash_obj.hexdigest()
 }
 
 s_request = json.dumps(request)
