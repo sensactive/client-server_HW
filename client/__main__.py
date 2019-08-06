@@ -1,6 +1,9 @@
+import hashlib
 from socket import socket
 from argparse import ArgumentParser
 
+from datetime import datetime
+import json
 
 parser = ArgumentParser()
 
@@ -28,11 +31,30 @@ if args.port:
 host, port = (default_config.get('host'), default_config.get('port'))
 
 sock = socket()
-sock.connect((default_config.get('host'), default_config.get('port')))
+sock.connect((host, port))
 
-message = input('Enter message: ')
+print('Client was started')
 
-sock.send(message.encode())
-print(f'Client send message: {message}')
-s_response = sock.recv(default_config.get('buffersize'))
-print(f'Message from server: {s_response.decode()}')
+hash_obj = hashlib.sha256()
+hash_obj.update(
+    str(datetime.now().timestamp()).encode()
+)
+
+action = input('Enter action: ')
+data = input('Enter data: ')
+
+request = {
+    'action': action,
+    'time': datetime.now().timestamp(),
+    'data': data,
+    'token': hash_obj.hexdigest()
+}
+
+s_request = json.dumps(request)
+
+sock.send(s_request.encode())
+print(f'Client send message: {data}')
+
+data = sock.recv(default_config.get('buffersize'))
+res = json.loads(data.decode())
+print(res)
