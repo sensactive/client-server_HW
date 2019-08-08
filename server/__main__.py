@@ -59,7 +59,7 @@ try:
             connections.append(client)
 
             logging.info(f'Client was connected with {address[0]}:{address[1]} | Connections: {connections}')
-        except :
+        except Exception:
             pass
 
         rlist, wlist, xlist = select.select(
