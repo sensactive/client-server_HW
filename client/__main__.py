@@ -1,12 +1,21 @@
+import zlib
 import hashlib
+import threading
 from socket import socket
 from argparse import ArgumentParser
 
 from datetime import datetime
 import json
 
-parser = ArgumentParser()
 
+def read(sock, buffersize):
+    while True:
+        comporessed_response = sock.recv(buffersize)
+        b_response = zlib.decompress(comporessed_response)
+        print(b_response.decode())
+
+
+parser = ArgumentParser()
 parser.add_argument(
     '-a', '--address', type=str,
     required=False, help='Set address'
@@ -14,6 +23,10 @@ parser.add_argument(
 parser.add_argument(
     '-p', '--port', type=int,
     required=False, help='Set port'
+)
+parser.add_argument(
+    '-m', '--mode', type=str, default='r',
+    required=False, help='Sets config file path'
 )
 args = parser.parse_args()
 
@@ -28,33 +41,39 @@ if args.address:
 if args.port:
     default_config['port'] = args.port
 
-host, port = (default_config.get('host'), default_config.get('port'))
-
 sock = socket()
-sock.connect((host, port))
-
-print('Client was started')
-
-hash_obj = hashlib.sha256()
-hash_obj.update(
-    str(datetime.now().timestamp()).encode()
+sock.connect(
+    (default_config.get('host'), default_config.get('port'))
 )
 
-action = input('Enter action: ')
-data = input('Enter data: ')
+print(f'Client was started')
 
-request = {
-    'action': action,
-    'time': datetime.now().timestamp(),
-    'data': data,
-    'token': hash_obj.hexdigest()
-}
+try:
+    read_thread = threading.Thread(
+        target=read, args=(sock, default_config.get('buffersize'),)
+    )
+    read_thread.start()
 
-s_request = json.dumps(request)
+    while True:
+        hash_obj = hashlib.sha256()
+        hash_obj.update(
+            str(datetime.now().timestamp()).encode()
+        )
 
-sock.send(s_request.encode())
-print(f'Client send message: {data}')
+        action = input('Enter action: ')
+        data = input('Enter data: ')
 
-data = sock.recv(default_config.get('buffersize'))
-res = json.loads(data.decode())
-print(res)
+        request = {
+            'action': action,
+            'time': datetime.now().timestamp(),
+            'data': data,
+            'token': hash_obj.hexdigest()
+        }
+
+        s_request = json.dumps(request)
+        b_request = zlib.compress(s_request.encode())
+        sock.send(b_request)
+        print(f'Client send data: {data}')
+except KeyboardInterrupt:
+    sock.close()
+    print('Client shutdown')

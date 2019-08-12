@@ -6,7 +6,7 @@ def server():
 
 
 def client():
-    local('python client')
+    local(f'python client')
 
 
 def test():
@@ -14,4 +14,4 @@ def test():
 
 
 def kill():
-    local('lsof -t -i tcp:8000 | xargs kill')
+    local('lsof -t -i tcp:7777 | xargs kill')
