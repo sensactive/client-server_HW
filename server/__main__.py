@@ -3,9 +3,28 @@ from argparse import ArgumentParser
 import select
 import json
 import logging
+import threading
 from handlers import handle_default_request
 from protocol import validate_request, make_response
 from resolvers import resolve
+
+
+def read(sock, connections, requests, buffersize):
+    try:
+        bytes_request = sock.recv(buffersize)
+    except Exception:
+        connections.remove(sock)
+    else:
+        if bytes_request:
+            requests.append(bytes_request)
+
+
+def write(sock, connection, response):
+    try:
+        sock.send(response)
+    except Exception:
+        connection.remove(sock)
+
 
 parser = ArgumentParser()
 
@@ -67,15 +86,20 @@ try:
         )
 
         for r_client in rlist:
-            b_request = r_client.recv(default_config.get('buffersize'))
-            requests.append(b_request)
+            r_thread = threading.Thread(
+                target=read, args=(r_client, connections, requests, default_config.get('buffersize'))
+            )
+            r_thread.start()
 
         if requests:
             b_request = requests.pop()
             b_response = handle_default_request(b_request)
 
             for w_client in wlist:
-                w_client.send(b_response)
+                w_thread = threading.Thread(
+                    target=write, args=(w_client, connections, b_response)
+                )
+                w_thread.start()
 
 except KeyboardInterrupt:
     logging.info('Server shutdown')
