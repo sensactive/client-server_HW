@@ -1,16 +1,10 @@
-from socket import socket
 from argparse import ArgumentParser
-from app import Application
-import select
+from app_server import Application
 import json
 import logging
-import threading
 from handlers import handle_default_request
 from protocol import validate_request, make_response
 from resolvers import resolve
-
-
-
 
 
 parser = ArgumentParser()
