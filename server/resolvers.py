@@ -1,5 +1,4 @@
 from functools import reduce
-
 from settings import INSTALLED_MODULES
 
 

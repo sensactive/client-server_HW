@@ -5,6 +5,10 @@ def server():
     local('python server')
 
 
+def migrate():
+    local('python server -m')
+
+
 def client():
     local(f'python client')
 
@@ -18,4 +22,4 @@ def test():
 
 
 def kill():
-    local('lsof -t -i tcp:7777 | xargs kill')
+    local('lsof -t -i tcp:8000 | xargs kill')
