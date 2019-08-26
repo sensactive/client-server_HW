@@ -1,0 +1,10 @@
+pyyaml
+jupyter
+chardet
+requests
+pytest
+pytest-cov
+fabric3
+tabulate
+jupyter_contrib_nbextensions
+sqlalchemy
