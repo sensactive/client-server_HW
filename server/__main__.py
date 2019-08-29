@@ -21,7 +21,6 @@ parser.add_argument(
     '-m', '--migrate', action='store_true'
 )
 
-
 args = parser.parse_args()
 
 default_config = {

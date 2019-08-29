@@ -37,8 +37,8 @@ class Application:
         self._sock.connect((self._host, self._port))
 
     def read(self):
-        compressed_response = self._sock.recv(self._buffersize)
-        b_response = zlib.decompress(compressed_response)
+        comporessed_response = self._sock.recv(self._buffersize)
+        b_response = zlib.decompress(comporessed_response)
         logging.info(b_response.decode())
 
     def write(self):
