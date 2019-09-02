@@ -1,6 +1,5 @@
-from decorators import login_required
+from protocol import make_response
 
 
-@login_required
 def server_error_controller(request):
     raise Exception('Server error message')
