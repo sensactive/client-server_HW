@@ -5,13 +5,21 @@ def server():
     local('python server')
 
 
+def migrate():
+    local('python server -m')
+
+
 def client():
-    local(f'python client')
+    local('python client')
 
 
 def test():
     local('pytest --cov-report term-missing --cov server')
 
 
+def notebook():
+    local('jupyter notebook')
+
+
 def kill():
-    local('lsof -t -i tcp:7777 | xargs kill')
+    local('lsof -t -i tcp:8000 | xargs kill')
