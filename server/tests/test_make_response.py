@@ -6,7 +6,7 @@ from protocol import make_response
 
 @pytest.fixture
 def action_fixture():
-    return 'test_action'
+    return 'test_acion'
 
 @pytest.fixture
 def time_fixture():

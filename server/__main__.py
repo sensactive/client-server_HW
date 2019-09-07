@@ -1,105 +1,60 @@
-from socket import socket
-from argparse import ArgumentParser
-import select
-import json
+import os
+import yaml
 import logging
-import threading
+import functools
+from argparse import ArgumentParser
+
+from app import Application
 from handlers import handle_default_request
-from protocol import validate_request, make_response
-from resolvers import resolve
-
-
-def read(sock, connections, requests, buffersize):
-    try:
-        bytes_request = sock.recv(buffersize)
-    except Exception:
-        connections.remove(sock)
-    else:
-        if bytes_request:
-            requests.append(bytes_request)
-
-
-def write(sock, connection, response):
-    try:
-        sock.send(response)
-    except Exception:
-        connection.remove(sock)
+from database import Base
+from settings import INSTALLED_MODULES, BASE_DIR
 
 
 parser = ArgumentParser()
 
 parser.add_argument(
-    '-a', '--address', type=str,
-    required=False, help='Set address'
+    '-c', '--config', type=str,
+    required=False, help='Sets config file path'
 )
+
 parser.add_argument(
-    '-p', '--port', type=int,
-    required=False, help='Set port'
+    '-m', '--migrate', action='store_true'
 )
+
 args = parser.parse_args()
 
 default_config = {
-    'host': '127.0.0.1',
-    'port': 7777,
+    'host': 'localhost',
+    'port': 8000,
     'buffersize': 1024
 }
 
-if args.address:
-    default_config['host'] = args.address
-if args.port:
-    default_config['port'] = args.port
-
-host, port = (default_config.get('host'), default_config.get('port'))
+if args.config:
+    with open(args.config) as file:
+        file_config = yaml.load(file, Loader=yaml.Loader)
+        default_config.update(file_config)
 
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('main.log', encoding='utf-8'),
+        logging.FileHandler('server.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
 
-requests = []
-connections = []
+if args.migrate:
+    module_name_list = [f'{item}.models' for item in INSTALLED_MODULES]
+    module_path_list = (os.path.join(BASE_DIR, item, 'models.py') for item in INSTALLED_MODULES)
+    for index, path in enumerate(module_path_list):
+        if os.path.exists(path):
+            __import__(module_name_list[index])
+    Base.metadata.create_all()
 
-try:
-    sock = socket()
-    sock.bind((host, port,))
-    sock.settimeout(0)
-    sock.listen(5)
-
-    logging.info(f'Server was started with {host}:{port}')
-
-    while True:
-        try:
-            client, address = sock.accept()
-
-            connections.append(client)
-
-            logging.info(f'Client was connected with {address[0]}:{address[1]} | Connections: {connections}')
-        except Exception:
-            pass
-
-        rlist, wlist, xlist = select.select(
-            connections, connections, connections, 0
-        )
-
-        for r_client in rlist:
-            r_thread = threading.Thread(
-                target=read, args=(r_client, connections, requests, default_config.get('buffersize'))
-            )
-            r_thread.start()
-
-        if requests:
-            b_request = requests.pop()
-            b_response = handle_default_request(b_request)
-
-            for w_client in wlist:
-                w_thread = threading.Thread(
-                    target=write, args=(w_client, connections, b_response)
-                )
-                w_thread.start()
-
-except KeyboardInterrupt:
-    logging.info('Server shutdown')
+else:
+    with Application(default_config.get('host'),
+                     default_config.get('port'),
+                     default_config.get('buffersize'),
+                     handle_default_request) as app:
+        app.bind()
+        app.run()
